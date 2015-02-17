@@ -1,0 +1,41 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Unofficial election results brought to you by FOSS@RIT</title>
+    <link rel='stylesheet' href='css/bean.css' type='text/css'>
+    <link rel='stylesheet' href='css/progress.css' type='text/css'>
+    <script type="text/javascript" src="js/jquery.js"></script>
+    <script type="text/javascript" src="js/election.js"></script>
+  </head>
+  <body>
+    <div class="wrapper">
+      <a href="http://github.com/FOSSRIT/monroe-elections"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_green_007200.png" alt="Fork me on GitHub"></a>
+      <h1 style='display: inline'>Unofficial Election Data</h1>
+      <div style='display: inline-block'>
+        brought to you by
+        <a href="http://foss.rit.edu" target="_blank">
+          <div class='logo-div'><img class='foss-logo' src="images/logo.png" alt="FOSS@RIT" border=none></div>
+        </a>
+      </div>
+      <ul id='tabs'></ul>
+      <div class='table'>
+        <div class='cell' id='list'></div>
+        <div class='cell' id='progress'></div>
+        <div class='cell' id="contest"></div>
+      </div>
+      <div class="footer">
+        <a name='key'></a>
+        A blank ballot is a ballot which has been handed in with no votes
+        recorded on it.<br />
+
+        An undervote occurs when the number of choices selected by a voter in a
+        contest is less than the maximum number allowed for that contest or
+        when no selection is made for a single choice contest. (Wikipedia)<br />
+
+        An overvote occurs when one votes for more than the maximum number of
+        selections allowed in a contest. (Wikipedia)<br />
+      </div>
+    </div>
+  </body>
+</html>

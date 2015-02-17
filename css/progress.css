@@ -1,0 +1,71 @@
+/* Set the color of the unfilled part of the progress bar */
+progress {
+    background-color: #BBBBBB;
+    border: 1px solid #333333;
+}
+progress::-webkit-progress-bar {
+    background-color: #BBBBBB;
+}
+
+/* Set the color of the filled part of the progress bar */
+/** Default color **/
+progress::-moz-progress-bar {
+    background-color: gray;
+}
+progress::-webkit-progress-value {
+    background-color: gray;
+}
+/** Democrat party color **/
+progress.democrat::-moz-progress-bar {
+    background-color: blue;
+}
+progress.democrat::-webkit-progress-value {
+    background-color: blue;
+}
+/** Green party color **/
+progress.green::-moz-progress-bar {
+    background-color: green;
+}
+progress.green::-webkit-progress-value {
+    background-color: green;
+}
+/** Republican party color **/
+progress.republican::-moz-progress-bar {
+    background-color: red;
+}
+progress.republican::-webkit-progress-value {
+    background-color: red;
+}
+/** Conservative party color **/
+progress.conservative::-moz-progress-bar {
+    background-color: #ff8040;
+}
+progress.conservative::-webkit-progress-value {
+    background-color: #ff8040;
+}
+/** Independence party color **/
+progress.independence::-moz-progress-bar {
+    background-color: purple;
+}
+progress.independence::-webkit-progress-value {
+    background-color: purple;
+}
+/** Libertarian party color **/
+progress.libertarian::-moz-progress-bar {
+    background-color: #396D9D;
+}
+progress.libertarian::-webkit-progress-value {
+    background-color: #396D9D;
+}
+/* Working Families party color **/
+progress.workingfamilies::-moz-progress-bar {
+    background-image: -moz-linear-gradient(top, #0000ff 0%, #0000ff 50%, #ffffff 50%, #ffffff 100%);
+}
+progress.workingfamilies::-webkit-progress-value {
+    background-image: -webkit-linear-gradient(top, #0000ff 0%,#0000ff 50%,#ffffff 50%,#ffffff 100%);
+}
+
+/* Make sure the tables look good on the page */
+table {
+    width: 100%;
+}

@@ -8,122 +8,118 @@ author: Nathaniel Case
 
 """
 
+try:
+    import simplejson as json
+except ImportError:
+    import json
+
+import os
 from operator import itemgetter
 
-HEADER = """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html>
-  <head>
-    <link rel='stylesheet' href='css/bean.css' type='text/css'>
-	<script type="text/javascript" src="js/jquery.js"></script>
-	<script type="text/javascript" src="js/jquery.progressbar.min.js"></script>
-	<script type="text/javascript" src="js/election.js"></script>
-  </head>
-  <body>
-<div class="wrapper">
-      <a href="http://github.com/ralphbean/monroe-elections"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://d3nwyuy0nl342s.cloudfront.net/img/7afbc8b248c68eb468279e8c17986ad46549fb71/687474703a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6461726b626c75655f3132313632312e706e67" alt="Fork me on GitHub"></a>
-    <table>"""
+BAR_TYPES = {
+    'DEM': 'democrat',
+    'REP': 'republican',
+    'GRN': 'green',
+    'LBT': 'libertarian',
+    'CON': 'conservative',
+    'WF': 'workingfamilies',
+    'WOR': 'workingfamilies',
+    'IND': 'independence'
+}
+
+def print_tables(data_dict):
+    """
+    Writes out the election information to a readable text table.
+    Exceedingly basic output.
+    """
+
+    for contest in sort_by_s(data_dict['contest']):
+        print("\n%s %s/%s" % (contest['nm'], contest['bal'], contest['el']))
+        for candidate in sort_by_s(data_dict['choice']):
+            if candidate['conid'] == contest['id']:
+                print("%s: %s" % (candidate['nm'], candidate['vot']))
 
 
-REAL_FOOTER = """
-<div class="footer">
-    <p>A blank ballot is a ballot which has been handed in with
-    no votes recorded on it.</p>
-    <p>An undervote occurs when the number of choices selected by a voter
-    in a contest is less than the maximum number allowed for that
-    contest or when no selection is made for a single choice
-    contest. (Wikipedia)</p>
-    <p>An overvote occurs when one votes for more than the maximum
-    number of selections allowed in a contest. (Wikipedia)</p>
-</div>
-"""
-FOOTER = """
-      <tr><td width="30%">
-        <div id="area"></div>
-      </td><td colspan=2>
-        <div id="contest"></div>
-      </td></tr>
-      <tr><td colspan=2>
-      </td></tr>
-    </table>
-    <div class="push"></div>
-    </div> <!-- wrapper -->
-    {REAL_FOOTER}
-  </body>
-</html>""".format(REAL_FOOTER=REAL_FOOTER)
+def write_json(election):
+    json_filename = 'json/' + election['election']['nm']
+    json_filename = json_filename.replace(' ', '-') + '.json'
 
-BAR_TYPES = ['DEM', 'REP', 'GRN', 'LBT', 'CON', 'WOR', 'IND']
+    with open(json_filename, 'w') as f:
+        f.write(json.dumps(election))
 
-def write_html(data_dict):
+def write_html(county, county_data):
     """This method gets called to build the HTML for the scraper."""
 
-    text = [HEADER]
-    text.extend(headers(data_dict['election'], data_dict['areatype']))
-    text.append(FOOTER)
-    container_file = open('index.html', 'w')
-    container_file.writelines(text)
-    container_file.close()
+    output_dir = os.path.join('html', county)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
 
-    text = areas(data_dict['areatype'], data_dict['area'], data_dict['contest'])
-    area_file = open("area.html", 'w')
-    area_file.writelines(text)
-    area_file.close()
+    text = update(county_data['election'], county_data['areatype'], county)
+    with open(os.path.join(output_dir, 'update.html'), 'w') as update_file:
+        update_file.writelines(text)
 
-    text = write_contests(data_dict['contest'], data_dict['choice'], data_dict['party'])
-    contest_file = open("contest.html", 'w')
-    contest_file.writelines(text)
-    contest_file.close()
+    text = area(county_data['areatype'], county_data['area'],
+                county_data['contest'])
+    with open(os.path.join(output_dir, "area.html"), 'w') as area_file:
+        area_file.writelines(text)
+
+    text = contest(county_data['contest'], county_data['choice'],
+                   county_data['party'])
+    with open(os.path.join(output_dir, "contest.html"), 'w') as contest_file:
+        contest_file.writelines(text)
 
 
-def headers(election, areatypes):
+def tabs(key, name):
+    with open('html/tabs.html', 'a') as tab_file:
+        tab_file.write("<li class='tab'><a href='#' class='loadE' id='%s'>%s</a></li>\n" %
+            (key, name))
+
+
+def clear_tabs():
+    with open('html/tabs.html', 'w') as tab_file:
+        tab_file.write("")
+
+
+def update(election, areatypes, county):
     """Writes out election information to a basic HTML file."""
+    return """<img id='logo' src='data-submodule/{}/logo.jpg' />
+              <h2>Reporting Precincts: {}/{} ({:0.1f}%)</h2>
+              <h3>Last updated: {}</h3>""".format(
+                county, election['clpol'], election['pol'],
+                float(election['clpol'])/float(election['pol'])*100,
+                election['ts'])
 
-    #text.append("Brought to you by <br>")
-    text = ["<tr><td colspan=3><h1><a href=\"http://foss.rit.edu\" target=\"_blank\"><img class='foss-logo' src=\"http://foss.rit.edu/files/logo.png\" alt=\"FOSS@RIT\" border=none></a>Unofficial data for %s %s</h1></td></tr>\n" %\
-             (election['jd'], election['des'])]
-    text.append("<tr><td colspan=2 width='50%%'>")
-    text.append("<ul style='list-style-type: none'>\n")
+
+def area(areatypes, areas, contests):
+    list_text = ["<ul>\n"]
     for areatype in sort_by_s(areatypes):
-        text.append("<li><a href='#' class='loadA' id='%s'>List of %s races</a><li/>" %
-                 (areatype['id'], areatype['nm']))
-    text.append("</ul>")
-    text.append("<!--<a href='#contest' class='load'>List of all races in %s</a><br/>-->\n" %
-             election['jd'])
-    text.append("</td><td>")
-    text.append("<h2>Reporting Precincts: %s/%s</h2>\n" %
-             (election['clpol'], election['pol']))
-    text.append("<h3>Last updated: %s</h3>\n" % election['ts'])
-    text.append("</td></tr>")
-    return text
+        list_text.append("<li>%s races<ul>\n" % areatype['nm'])
 
-
-def areas(areatypes, areas, contests):
-    text = ["<a name='areas'/>\n"]
-    for areatype in sort_by_s(areatypes):
-        text.append("<div id='a%s'>\n" % areatype['id'])
-        text.append("<h3>%s Races</h3>\n" % areatype['nm'])
-        text.append("<table>\n")
         for area in sort_by_s(areas):
             if area['atid'] == areatype['id']:
                 if areatype['nm'] != area['nm']:
-                    text.append("<tr><th align='left'>%s</th></tr>\n" %
+                    list_text.append("<li>%s<ul>\n" %
                              (area['nm']))
                 for contest in sort_by_s(contests):
                     if contest['aid'] == area['id']:
-                        text.append("<tr><td><a href='#contest' class='loadC' id='%s'>%s</a></td></tr>\n" %
+                        list_text.append("<li><a href='#' class='loadC' id='%s'>%s</a></li>\n" %
                                  (contest['id'], contest['nm']))
-        text.append("</table><br/>\n")
-        text.append("</div>\n")
-    return text
+                list_text.append('</ul></li>\n')
+        list_text.append('</ul></li>\n')
+    list_text.append("</ul>\n")
+    return list_text
 
 
-def write_contests(contests, choices, parties):
-    text = ["<a name='contests'/>\n"]
+def contest(contests, choices, parties):
+    text = list()
+    text.append('<html><head><link rel="stylesheet" href="../../css/progress.css" type="text/css" /></head><body>')
     for contest in sort_by_s(contests):
         if contest['bal'] == 0:
             contest['bal'] = 1
+        text.append("<a name='c%s' />\n" % contest['id'])
         text.append("<div id='c%s'>\n" % contest['id'])
-        text.append("<table width='100%'>\n")
-        text.append("<tr><th colspan=4>%s</th></tr>\n" % contest['nm'])
+        text.append("<table>\n")
+        text.append("<tr><th colspan=5>%s</th></tr>\n" % contest['nm'])
         total_ballots = contest['bal']/100.0
         for choice in sort_by_s(choices):
             if choice['conid'] == contest['id']:
@@ -131,32 +127,40 @@ def write_contests(contests, choices, parties):
                     winner = "*"
                 else:
                     winner = ""
+
+                party_class = 'OTHER'
+
                 if len(choice['vot']) == 2:
+                    # Get rid of 'tot' so we don't get confused
                     choice['vot'].pop('tot')
                     single_line = choice['vot'].popitem()
                     pid = single_line[0]
-                    party_class = 'OTHER'
-                    if parties[pid]['ab'] in BAR_TYPES:
-                        party_class = parties[pid]['ab']
-                    text.append("<tr><td>%s</td><td>%s</td><td>%s</td><td class='%s'><span class='progressBar'>%s%%</span></td></tr>\n" %
-                            (winner, choice['nm'], parties[pid]['nm'],
-                             party_class, single_line[1]/total_ballots))
+                    if parties[pid]['ab'].upper() in BAR_TYPES:
+                        party_class = BAR_TYPES[parties[pid]['ab'].upper()]
+                    total = single_line[1]
+                    party = parties[pid]['nm']
                 else:
                     total = choice['vot'].pop('tot')
-                    text.append("<tr><td>%s</td><td>%s</td><td>%s</td><td class='OTHER'><span class='progressBar'>%s%%</span></td></tr>\n" %
-                            (winner, choice['nm'], "Total", total/total_ballots))
+                    party = "Total"
+                text.append("<tr><td>{0}</td><td>{1}</td><td>{2}</td><td><progress class='{3}' value={4} max=100 /> {4:.0f}%</td><td>{5}</td></tr>\n" \
+                    .format(winner, choice['nm'], party, party_class,
+                            total/total_ballots, total))
                 party_list = sorted(choice['vot'], key=lambda pid: parties[pid]['s'])
                 for party in party_list:
                     party_class = 'OTHER'
-                    if parties[party]['ab'] in BAR_TYPES:
-                        party_class = parties[party]['ab']
-                    text.append("<tr><td colspan=2/><td>%s</td><td class='%s'><span class='progressBar'>%s%%</span></td></tr>\n" %
-                             (parties[party]['nm'], party_class, choice['vot'][party]/total_ballots))
-        text.append("<tr><td/><td colspan=2>Blank Ballots<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['bl'])
-        text.append("<tr><td/><td colspan=2>Undervotes<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['uv'])
-        text.append("<tr><td/><td colspan=2>Overvotes<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['ov'])
+                    if parties[party]['ab'].upper() in BAR_TYPES:
+                        party_class = BAR_TYPES[parties[party]['ab'].upper()]
+                    text.append("<tr><td colspan=2/><td>{0}</td><td><progress class='{1}' value={2} max=100 /> {2:.0f}%</td><td>{3}</td></tr>\n" \
+                        .format(parties[party]['nm'], party_class,
+                            choice['vot'][party]/total_ballots,
+                            choice['vot'][party]))
+        text.append("<tr><td/><td colspan=3>Blank Ballots<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['bl'])
+        text.append("<tr><td/><td colspan=3>Undervotes<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['uv'])
+        text.append("<tr><td/><td colspan=3>Overvotes<a href='#key'>*</a></td><td>%s</td></tr>\n" % contest['ov'])
         text.append("</table><br/>\n")
         text.append("</div>\n")
+
+    text.append('</body></html>')
     return text
 
 
